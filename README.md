@@ -20,16 +20,28 @@ A modern Digital Signage CMS built by [Telyro](https://telyro.com) — with Goog
 ## Screenshots
 
 ### Login
-![Login](docs/screenshots/login.png)
+![Login](docs/screenshots/Login.jpg)
 
 ### Dashboard
-![Dashboard](docs/screenshots/dashboard.png)
+![Dashboard](docs/screenshots/Dashboard.jpg)
 
 ### Playlists
-![Playlists](docs/screenshots/Playlists.png)
+![Playlists](docs/screenshots/Playlists.jpg)
+
+### Google Drive
+![Google Drive](docs/screenshots/Google%20Drive%20.jpg)
+
+### Gruppen
+![Gruppen](docs/screenshots/Gruppen.jpg)
+
+### Profil
+![Profil](docs/screenshots/Profil%20.jpg)
+
+### QR-Code
+![QR-Code](docs/screenshots/QR-Code.jpg)
 
 ### Signage Player
-![Player](docs/screenshots/Signage%20Player.png)
+![Player](docs/screenshots/Signage%20Player.jpg)
 
 ## Tech Stack
 
