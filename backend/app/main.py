@@ -44,3 +44,11 @@ app.mount("/player", StaticFiles(directory=player_path, html=True), name="player
 @app.get("/")
 def root():
     return {"status": "Signage API läuft ✅"}
+
+@app.get("/debug/connections")
+def debug_connections():
+    from app.routers.ws import connections, screen_connections
+    return {
+        "by_playlist": {pid: len(sockets) for pid, sockets in connections.items()},
+        "by_screen": {sid: len(sockets) for sid, sockets in screen_connections.items()},
+    }

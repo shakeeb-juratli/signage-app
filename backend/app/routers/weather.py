@@ -89,5 +89,6 @@ async def get_weather(
         "description": data["weather"][0]["description"],
         "icon": data["weather"][0]["icon"],
         "humidity": data["main"]["humidity"],
-        "wind": round(data["wind"]["speed"] * 3.6)  # m/s → km/h
+        "wind": round(data["wind"]["speed"] * 3.6),  # m/s → km/h
+        "timezone": data.get("timezone", 0),          # seconds offset from UTC
     }

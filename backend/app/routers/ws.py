@@ -1,5 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.orm import Session
+from typing import Optional
 from app.database import SessionLocal
 from app.models.playlist import Playlist
 from app.models.screen import Screen
@@ -10,17 +11,11 @@ from app.routers.drive import get_user_from_token
 router = APIRouter()
 
 connections: dict[int, list[WebSocket]] = {}
+screen_connections: dict[int, list[WebSocket]] = {}
 
 
 def get_online_screen_ids(db: Session) -> list[int]:
-    active_playlist_ids = [pid for pid, sockets in connections.items() if sockets]
-    if not active_playlist_ids:
-        return []
-    rows = db.query(Playlist.screen_id).filter(
-        Playlist.id.in_(active_playlist_ids),
-        Playlist.screen_id.isnot(None)
-    ).all()
-    return list({r.screen_id for r in rows})
+    return [sid for sid, sockets in screen_connections.items() if sockets]
 
 
 async def broadcast(playlist_id: int, message: dict):
@@ -57,7 +52,14 @@ def _notify_player_offline(playlist_id: int):
 
 
 @router.websocket("/ws/player/{playlist_id}")
-async def websocket_player(websocket: WebSocket, playlist_id: int, token: str = Query(...)):
+async def websocket_player(
+    websocket: WebSocket,
+    playlist_id: int,
+    token: str = Query(...),
+    screen_id: Optional[int] = Query(None)
+):
+    await websocket.accept()
+
     db = SessionLocal()
     try:
         user = get_user_from_token(token, db)
@@ -68,18 +70,24 @@ async def websocket_player(websocket: WebSocket, playlist_id: int, token: str = 
         await websocket.close(code=4001)
         return
 
-    await websocket.accept()
-
     if playlist_id not in connections:
         connections[playlist_id] = []
     connections[playlist_id].append(websocket)
 
-    print(f"Player verbunden: Playlist {playlist_id} — {len(connections[playlist_id])} aktiv")
+    if screen_id is not None:
+        if screen_id not in screen_connections:
+            screen_connections[screen_id] = []
+        screen_connections[screen_id].append(websocket)
+
+    print(f"Player verbunden: Playlist {playlist_id}, Screen {screen_id} — aktiv")
 
     try:
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:
-        connections[playlist_id].remove(websocket)
-        print(f"Player getrennt: Playlist {playlist_id}")
+        if websocket in connections.get(playlist_id, []):
+            connections[playlist_id].remove(websocket)
+        if screen_id is not None and websocket in screen_connections.get(screen_id, []):
+            screen_connections[screen_id].remove(websocket)
+        print(f"Player getrennt: Playlist {playlist_id}, Screen {screen_id}")
         _notify_player_offline(playlist_id)
