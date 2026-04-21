@@ -361,7 +361,7 @@
       const playlistId = activePlaylistId || params.get("playlist");
       if (!playlistId) return;
 
-      const wsUrl = `ws://localhost:8000/ws/player/${playlistId}`;
+      const wsUrl = `ws://localhost:8000/ws/player/${playlistId}?token=${TOKEN}`;
       const ws    = new WebSocket(wsUrl);
 
       ws.onopen = () => {
