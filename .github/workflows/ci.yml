@@ -1,0 +1,85 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: signage
+          POSTGRES_PASSWORD: signage
+          POSTGRES_DB: signage
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Pakete installieren
+        run: |
+          cd backend
+          pip install -r requirements.txt
+
+      - name: .env erstellen
+        run: |
+          cd backend
+          echo "DATABASE_URL=postgresql://signage:signage@localhost:5432/signage" > .env
+          echo "SECRET_KEY=test-secret-key-for-ci" >> .env
+          echo "GOOGLE_CLIENT_ID=" >> .env
+          echo "GOOGLE_CLIENT_SECRET=" >> .env
+          echo "OPENWEATHER_API_KEY=" >> .env
+          echo "VAPID_PRIVATE_KEY=detFS8lXL6xzFu1yt4aZudCuvv3kZlYYp4If3obgSVg" >> .env
+          echo "VAPID_PUBLIC_KEY=BH07NshuV1rhahqf_z-MJly8ZgnsInu_Gh4xXy3HbMLdNBUEg0p0g_M80QklKwZF0SX6WfNvyLomP_8tzqzb-EY" >> .env
+          echo "VAPID_EMAIL=mailto:ci@example.com" >> .env
+          echo "ALLOWED_ORIGINS=http://localhost:5173" >> .env
+          echo "ENVIRONMENT=development" >> .env
+
+      - name: Imports prüfen
+        run: |
+          cd backend
+          python check_imports.py
+
+      - name: Datenbank migrieren
+        run: |
+          cd backend
+          python migrate.py
+
+  frontend-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Pakete installieren
+        run: |
+          cd frontend
+          npm install
+
+      - name: Frontend bauen
+        run: |
+          cd frontend
+          npm run build
+          echo "? Frontend Build erfolgreich!"
